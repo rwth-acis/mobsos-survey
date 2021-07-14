@@ -4113,9 +4113,6 @@ public class SurveyService extends RESTService {
 			String d_start = dateFormat.format(new Date(ts_start));
 			String d_end = dateFormat.format(new Date(ts_end));
 
-			// System.out.println(ts_start + " -> " + d_start);
-			// System.out.println(ts_end + " -> " + d_end);
-
 			o.put("start", d_start);
 			o.put("end", d_end);
 			o.put("lang", rs.getString("lang"));
@@ -4315,6 +4312,20 @@ public class SurveyService extends RESTService {
 					|| o.get("start") == null || o.get("end") == null || o.get("lang") == null) {
 				throw new IllegalArgumentException(
 						"Survey data incomplete! All fields name, organization, logo, description, resource, resource-label, start, end, and lang must be defined!");
+			}
+
+			try {
+				// Convert times to UTC
+				SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+				df.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
+				Date startDate = df.parse((String) o.get("start"));
+				Date endDate = df.parse((String) o.get("end"));
+				df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+				df.setTimeZone(TimeZone.getTimeZone("UTC"));
+				o.put("start", df.format(startDate));
+				o.put("end", df.format(endDate));
+			} catch (java.text.ParseException e) {
+				throw new IllegalArgumentException("Error parsing start/end times");
 			}
 
 			// finally check time integrity constraint: start must be before end (possibly not enforced by database;
